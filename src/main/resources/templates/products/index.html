@@ -4,7 +4,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Product Management</title>
-
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -14,100 +13,176 @@
       body {
         background-color: #f5f7fa;
       }
-      .product-img {
-        width: 70px;
-        height: 70px;
+
+      .card-product {
+        border-radius: 15px;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .card-product:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .card-product img {
+        height: 180px;
         object-fit: cover;
-        border-radius: 10px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
+
+      .card-product .card-body {
+        padding: 1rem;
+      }
+
+      .badge-category {
+        font-size: 0.8rem;
+        padding: 0.4em 0.7em;
+        border-radius: 0.6rem;
+      }
+
+      .btn-small {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+      }
+
+      @media (max-width: 576px) {
+        .card-product img {
+          height: 150px;
+        }
       }
     </style>
   </head>
   <body>
     <div class="container py-5">
       <!-- Header -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div
+        class="d-flex justify-content-between align-items-center mb-4 flex-wrap"
+      >
         <h2 class="fw-bold">📦 Product Management</h2>
-        <a class="btn btn-success" th:href="@{/products/create}">
+        <a class="btn btn-success mt-2 mt-md-0" th:href="@{/products/create}">
           ➕ Create Product
         </a>
       </div>
 
-      <!-- Card -->
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle">
-              <thead class="table-dark">
-                <tr>
-                  <th>ID</th>
-                  <th>Product</th>
-                  <th>Brand</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                  <th>Image</th>
-                  <th>Created</th>
-                  <th class="text-center">Actions</th>
-                </tr>
-              </thead>
+      <!-- Grid Products -->
+      <div class="row g-4" th:if="${products != null}">
+        <div
+          class="col-12 col-sm-6 col-md-4 col-lg-3"
+          th:each="product : ${products}"
+        >
+          <div class="card card-product shadow-sm">
+            <img
+              th:src="${product.imageFileName}"
+              class="card-img-top"
+              alt="Product Image"
+            />
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title fw-bold" th:text="${product.name}"></h5>
+              <p class="mb-1 text-muted" th:text="${product.brand}"></p>
+              <span
+                class="badge bg-info text-dark badge-category mb-2"
+                th:text="${product.category}"
+              ></span>
+              <p class="fw-semibold mb-2">
+                $<span
+                  th:text="${#numbers.formatDecimal(product.price,1,2)}"
+                ></span>
+              </p>
+              <p
+                class="text-truncate mb-3"
+                th:text="${product.description}"
+              ></p>
+              <div class="mt-auto d-flex justify-content-between">
+                <a
+                  class="btn btn-outline-primary btn-small"
+                  th:href="@{/products/edit(id=${product.id})}"
+                  >✏ Edit</a
+                >
+                <!-- Delete Button Trigger Modal -->
+                <button
+                  class="btn btn-outline-danger btn-small"
+                  data-bs-toggle="modal"
+                  data-bs-target="#deleteModal"
+                  th:attr="data-id=${product.id}, data-name=${product.name}"
+                >
+                  🗑 Delete
+                </button>
+              </div>
+            </div>
+            <div
+              class="card-footer text-muted text-end small"
+              th:text="${#dates.format(product.createdAt,'dd MMM yyyy')}"
+            ></div>
+          </div>
+        </div>
+      </div>
 
-              <tbody>
-                <tr th:each="product : ${products}">
-                  <td th:text="${product.id}"></td>
+      <!-- Empty State -->
+      <div
+        class="text-center py-5"
+        th:if="${products == null || #lists.isEmpty(products)}"
+      >
+        <p class="text-muted">
+          No products found. Click "Create Product" to add one.
+        </p>
+      </div>
+    </div>
 
-                  <td class="fw-semibold" th:text="${product.name}"></td>
-
-                  <td th:text="${product.brand}"></td>
-
-                  <td>
-                    <span
-                      class="badge bg-info text-dark"
-                      th:text="${product.category}"
-                    ></span>
-                  </td>
-
-                  <td>
-                    $<span
-                      th:text="${#numbers.formatDecimal(product.price,1,2)}"
-                    ></span>
-                  </td>
-
-                  <td>
-                    <img
-                      class="product-img"
-                      th:src="@{/images/{img}(img=${product.imageFileName})}"
-                      alt="product"
-                    />
-                  </td>
-
-                  <td
-                    th:text="${#dates.format(product.createdAt,'dd MMM yyyy')}"
-                  ></td>
-
-                  <td class="text-center">
-                    <a
-                      class="btn btn-outline-primary btn-sm me-1"
-                      th:href="@{/products/edit(id=${product.id})}"
-                    >
-                      ✏ Edit
-                    </a>
-
-                    <a
-                      class="btn btn-outline-danger btn-sm"
-                      th:href="@{/products/delete(id=${product.id})}"
-                      onclick="return confirm('Are you sure you want to delete this product?');"
-                    >
-                      🗑 Delete
-                    </a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+    <!-- Delete Confirmation Modal -->
+    <div
+      class="modal fade"
+      id="deleteModal"
+      tabindex="-1"
+      aria-labelledby="deleteModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteModalLabel">Delete Product</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete
+            <strong id="modalProductName"></strong>?
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <a href="#" class="btn btn-danger" id="confirmDeleteBtn">Delete</a>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Modal Delete Script -->
+    <script>
+      const deleteModal = document.getElementById("deleteModal");
+      deleteModal.addEventListener("show.bs.modal", function (event) {
+        const button = event.relatedTarget;
+        const productId = button.getAttribute("data-id");
+        const productName = button.getAttribute("data-name");
+
+        const modalTitle = deleteModal.querySelector(".modal-title");
+        const modalBodyName = deleteModal.querySelector("#modalProductName");
+        const confirmBtn = deleteModal.querySelector("#confirmDeleteBtn");
+
+        modalBodyName.textContent = productName;
+        confirmBtn.setAttribute("href", `/products/delete?id=${productId}`);
+      });
+    </script>
   </body>
 </html>
