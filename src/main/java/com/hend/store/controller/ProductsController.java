@@ -1,9 +1,10 @@
 package com.hend.store.controller;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,8 +13,10 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.hend.store.models.Category;
 import com.hend.store.models.Product;
 import com.hend.store.models.ProductDTO;
+import com.hend.store.services.CategoryRepository;
 import com.hend.store.services.CloudinaryService;
 import com.hend.store.services.ProductsRepository;
 
@@ -23,22 +26,38 @@ import jakarta.validation.Valid;
 @RequestMapping("/products")
 public class ProductsController {
 
-    @Autowired
-    private ProductsRepository productsRepository;
+    private static final Logger log = LoggerFactory.getLogger(ProductsController.class);
 
-    @Autowired
-    private CloudinaryService cloudinaryService;
+    private final ProductsRepository productsRepository;
+    private final CategoryRepository categoryRepository;
+    private final CloudinaryService cloudinaryService;
+
+    public ProductsController(ProductsRepository productsRepository,
+                              CategoryRepository categoryRepository,
+                              CloudinaryService cloudinaryService) {
+        this.productsRepository = productsRepository;
+        this.categoryRepository = categoryRepository;
+        this.cloudinaryService = cloudinaryService;
+    }
 
     @GetMapping({ "", "/" })
-    public String showProductList(Model model) {
-        List<Product> products = productsRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+    public String showProductList(@RequestParam(required = false) String search, Model model) {
+        List<Product> products;
+        if (search != null && !search.isBlank()) {
+            products = productsRepository
+                .findByNameContainingIgnoreCaseOrBrandContainingIgnoreCase(search, search);
+        } else {
+            products = productsRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+        }
         model.addAttribute("products", products);
+        model.addAttribute("search", search);
         return "products/index";
     }
 
     @GetMapping("/create")
     public String showCreatePage(Model model) {
         model.addAttribute("productDTO", new ProductDTO());
+        model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
         return "products/CreateProduct";
     }
 
@@ -51,28 +70,31 @@ public class ProductsController {
         }
 
         if (result.hasErrors()) {
+            model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
             return "products/CreateProduct";
         }
 
         try {
-            // Upload langsung ke Cloudinary dalam folder store/products
             MultipartFile imageFile = productDTO.getImageFile();
             String imageUrl = cloudinaryService.upload(imageFile, "store/products");
+
+            Category category = categoryRepository.findById(productDTO.getCategoryId()).orElse(null);
 
             Product product = new Product();
             product.setName(productDTO.getName());
             product.setBrand(productDTO.getBrand());
-            product.setCategory(productDTO.getCategory());
+            product.setCategory(category);
             product.setPrice(productDTO.getPrice());
             product.setDescription(productDTO.getDescription());
-            product.setCreatedAt(new Date());
-            product.setImageFileName(imageUrl); // simpan URL Cloudinary
+            product.setCreatedAt(LocalDateTime.now());
+            product.setImageFileName(imageUrl);
 
             productsRepository.save(product);
 
         } catch (Exception e) {
-            System.out.println("Error uploading product: " + e.getMessage());
+            log.error("Error creating product", e);
             result.addError(new FieldError("productDTO", "imageFile", "Failed to upload image"));
+            model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
             return "products/CreateProduct";
         }
 
@@ -88,12 +110,13 @@ public class ProductsController {
         ProductDTO productDTO = new ProductDTO();
         productDTO.setName(product.getName());
         productDTO.setBrand(product.getBrand());
-        productDTO.setCategory(product.getCategory());
+        productDTO.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : 0);
         productDTO.setPrice(product.getPrice());
         productDTO.setDescription(product.getDescription());
 
         model.addAttribute("product", product);
         model.addAttribute("productDTO", productDTO);
+        model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
 
         return "products/EditProduct";
     }
@@ -109,29 +132,31 @@ public class ProductsController {
         model.addAttribute("product", product);
 
         if (result.hasErrors()) {
+            model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
             return "products/EditProduct";
         }
 
         try {
-            // Jika ada file baru di-upload
             MultipartFile imageFile = productDTO.getImageFile();
             if (imageFile != null && !imageFile.isEmpty()) {
                 String imageUrl = cloudinaryService.upload(imageFile, "store/products");
                 product.setImageFileName(imageUrl);
             }
 
-            // Update data lain
+            Category category = categoryRepository.findById(productDTO.getCategoryId()).orElse(null);
+
             product.setName(productDTO.getName());
             product.setBrand(productDTO.getBrand());
-            product.setCategory(productDTO.getCategory());
+            product.setCategory(category);
             product.setPrice(productDTO.getPrice());
             product.setDescription(productDTO.getDescription());
 
             productsRepository.save(product);
 
         } catch (Exception e) {
-            System.out.println("Error updating product: " + e.getMessage());
+            log.error("Error updating product", e);
             result.addError(new FieldError("productDTO", "imageFile", "Failed to upload image"));
+            model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
             return "products/EditProduct";
         }
 
