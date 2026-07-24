@@ -162,8 +162,8 @@ curl -X POST http://localhost:8080/api/products \
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/hendwunga/AntiGravity.git
-cd AntiGravity/store
+git clone https://github.com/hendwunga/store.git
+cd store
 ```
 
 ### 2. Jalankan (Local — H2, tanpa MySQL)
