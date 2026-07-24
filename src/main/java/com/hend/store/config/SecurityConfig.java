@@ -19,7 +19,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login", "/actuator/health", "/css/**", "/js/**", "/webjars/**", "/h2-console/**").permitAll()
+                .requestMatchers(
+                    "/login", "/actuator/health",
+                    "/css/**", "/js/**", "/webjars/**", "/h2-console/**",
+                    "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html",
+                    "/api/**"
+                ).permitAll()
                 .requestMatchers("/categories/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
@@ -33,7 +38,7 @@ public class SecurityConfig {
                 .permitAll()
                 .logoutRequestMatcher(PathPatternRequestMatcher.pathPattern(HttpMethod.GET, "/logout"))
             )
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/api/**"))
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
         return http.build();
     }

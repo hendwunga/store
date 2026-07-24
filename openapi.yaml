@@ -1,0 +1,493 @@
+openapi: 3.0.3
+info:
+  title:  Store API
+  description: |
+    REST API untuk manajemen produk dan kategori pada aplikasi  Store.
+    
+    ## Autentikasi
+    - **GET endpoints** (`/api/products`, `/api/categories`): Dapat diakses tanpa autentikasi
+    - **POST/PUT/DELETE endpoints**: Dapat diakses tanpa autentikasi (development mode)
+    
+    ## Format Response
+    Semua endpoint mengembalikan response dalam format:
+    ```json
+    {
+      "success": true/false,
+      "message": "Deskripsi pesan",
+      "data": { ... }
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: Hendro Wungga
+    email: hendro@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local Development Server
+
+tags:
+  - name: Products
+    description: CRUD operasi untuk produk
+  - name: Categories
+    description: CRUD operasi untuk kategori
+
+paths:
+  /api/products:
+    get:
+      tags: [Products]
+      summary: List semua produk
+      description: Mengembalikan daftar semua produk. Supports pencarian berdasarkan nama atau brand.
+      operationId: getAllProducts
+      parameters:
+        - name: search
+          in: query
+          description: Kata kunci pencarian (opsional)
+          required: false
+          schema:
+            type: string
+            example: "macbook"
+      responses:
+        "200":
+          description: Berhasil mengambil data produk
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListResponse"
+
+    post:
+      tags: [Products]
+      summary: Buat produk baru
+      description: Membuat produk baru dengan data yang dikirimkan
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductRequest"
+      responses:
+        "201":
+          description: Produk berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+        "400":
+          description: Validasi gagal atau kategori tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/products/{id}:
+    get:
+      tags: [Products]
+      summary: Detail satu produk
+      description: Mengembalikan detail produk berdasarkan ID
+      operationId: getProductById
+      parameters:
+        - name: id
+          in: path
+          description: ID produk
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Produk ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+        "404":
+          description: Produk tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      tags: [Products]
+      summary: Update produk
+      description: Mengupdate data produk berdasarkan ID
+      operationId: updateProduct
+      parameters:
+        - name: id
+          in: path
+          description: ID produk
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductRequest"
+      responses:
+        "200":
+          description: Produk berhasil diupdate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+        "404":
+          description: Produk tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Validasi gagal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags: [Products]
+      summary: Hapus produk
+      description: Menghapus produk berdasarkan ID
+      operationId: deleteProduct
+      parameters:
+        - name: id
+          in: path
+          description: ID produk
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Produk berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoidResponse"
+        "404":
+          description: Produk tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/categories:
+    get:
+      tags: [Categories]
+      summary: List semua kategori
+      description: Mengembalikan daftar semua kategori yang tersedia
+      operationId: getAllCategories
+      responses:
+        "200":
+          description: Berhasil mengambil data kategori
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryListResponse"
+
+    post:
+      tags: [Categories]
+      summary: Buat kategori baru
+      description: Membuat kategori baru (hanya admin)
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryRequest"
+      responses:
+        "201":
+          description: Kategori berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryResponse"
+        "400":
+          description: Nama kategori sudah ada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/categories/{id}:
+    get:
+      tags: [Categories]
+      summary: Detail satu kategori
+      description: Mengembalikan detail kategori berdasarkan ID
+      operationId: getCategoryById
+      parameters:
+        - name: id
+          in: path
+          description: ID kategori
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Kategori ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryResponse"
+        "404":
+          description: Kategori tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      tags: [Categories]
+      summary: Update kategori
+      description: Mengupdate nama kategori berdasarkan ID
+      operationId: updateCategory
+      parameters:
+        - name: id
+          in: path
+          description: ID kategori
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryRequest"
+      responses:
+        "200":
+          description: Kategori berhasil diupdate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryResponse"
+        "404":
+          description: Kategori tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Nama kategori sudah ada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags: [Categories]
+      summary: Hapus kategori
+      description: Menghapus kategori berdasarkan ID
+      operationId: deleteCategory
+      parameters:
+        - name: id
+          in: path
+          description: ID kategori
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Kategori berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoidResponse"
+        "404":
+          description: Kategori tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    ProductRequest:
+      type: object
+      description: Request body untuk membuat atau mengupdate produk
+      required:
+        - name
+        - brand
+        - categoryId
+        - description
+      properties:
+        name:
+          type: string
+          description: Nama produk
+          example: "MacBook Pro 14 inch"
+        brand:
+          type: string
+          description: Merek produk
+          example: "Apple"
+        categoryId:
+          type: integer
+          description: ID kategori produk
+          minimum: 1
+          example: 1
+        price:
+          type: number
+          format: double
+          description: Harga produk
+          minimum: 0
+          example: 19999000
+        description:
+          type: string
+          description: Deskripsi produk (10-2000 karakter)
+          minLength: 10
+          maxLength: 2000
+          example: "MacBook Pro 14 inch dengan chip M3 Pro"
+        imageUrl:
+          type: string
+          description: URL gambar produk
+          example: "https://example.com/macbook.jpg"
+
+    CategoryRequest:
+      type: object
+      description: Request body untuk membuat atau mengupdate kategori
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Nama kategori
+          example: "Electronics"
+
+    Product:
+      type: object
+      description: Entity produk
+      properties:
+        id:
+          type: integer
+          description: ID produk
+          example: 1
+        name:
+          type: string
+          description: Nama produk
+          example: "MacBook Pro 14 inch"
+        brand:
+          type: string
+          description: Merek produk
+          example: "Apple"
+        category:
+          $ref: "#/components/schemas/Category"
+        price:
+          type: number
+          format: double
+          description: Harga produk
+          example: 19999000
+        description:
+          type: string
+          description: Deskripsi produk
+          example: "MacBook Pro 14 inch dengan chip M3 Pro"
+        createdAt:
+          type: string
+          format: date-time
+          description: Waktu pembuatan
+          example: "2026-01-15T10:30:00"
+        imageFileName:
+          type: string
+          description: URL/ nama file gambar
+          example: "https://res.cloudinary.com/demo/image/upload/sample.jpg"
+
+    Category:
+      type: object
+      description: Entity kategori
+      properties:
+        id:
+          type: integer
+          description: ID kategori
+          example: 1
+        name:
+          type: string
+          description: Nama kategori
+          example: "Electronics"
+
+    ProductResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Product retrieved successfully"
+        data:
+          $ref: "#/components/schemas/Product"
+
+    ProductListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Products retrieved successfully"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+
+    CategoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Category retrieved successfully"
+        data:
+          $ref: "#/components/schemas/Category"
+
+    CategoryListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Categories retrieved successfully"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Category"
+
+    VoidResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Deleted successfully"
+        data:
+          type: object
+          nullable: true
+          example: null
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Resource not found"
+        data:
+          type: object
+          nullable: true
+          example: null
