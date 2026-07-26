@@ -21,11 +21,14 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/login", "/actuator/health",
-                    "/css/**", "/js/**", "/webjars/**", "/h2-console/**",
+                    "/css/**", "/js/**", "/webjars/**", "/uploads/**",
+                    "/h2-console", "/h2-console/**",
                     "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html",
                     "/api/**"
                 ).permitAll()
                 .requestMatchers("/categories/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/products/create", "/products/edit", "/products/delete").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/products/create", "/products/edit", "/products/delete").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
