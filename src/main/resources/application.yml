@@ -1,0 +1,58 @@
+# ============================================
+# APPLICATION CONFIGURATION (Default/Production)
+# ============================================
+
+spring:
+  application:
+    name: store
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${PROD_DB_URL}
+    username: ${PROD_DB_USER}
+    password: ${PROD_DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# ============================================
+# SWAGGER / OPENAPI CONFIGURATION
+# ============================================
+
+cloudinary:
+  cloud:
+    name: ${CLOUDINARY_CLOUD_NAME:}
+  api:
+    key: ${CLOUDINARY_API_KEY:}
+    secret: ${CLOUDINARY_API_SECRET:}
+
+app:
+  upload:
+    dir: ${UPLOAD_DIR:uploads}
+  openapi:
+    title: ${APP_TITLE:Store API}
+    version: ${APP_VERSION:1.0.0}
+    description: ${APP_DESC:REST API untuk manajemen produk dan kategori}
+    license: ${LICENSE_NAME:MIT}
+    contact:
+      name: ${CONTACT_NAME:Hend Wunga}
+      email: ${CONTACT_EMAIL:hend@example.com}
+    server:
+      local: ${URL_LOCAL:http://localhost:8080}
+      staging: ${URL_STAGING:https://staging-store.herokuapp.com}
+      prod: ${URL_PROD:https://your-app.herokuapp.com}
