@@ -1,12 +1,19 @@
 openapi: 3.0.3
 info:
-  title:  Store API
+  title: Store API
   description: |
-    REST API untuk manajemen produk dan kategori pada aplikasi  Store.
+    REST API untuk manajemen produk dan kategori pada aplikasi Store.
     
     ## Autentikasi
-    - **GET endpoints** (`/api/products`, `/api/categories`): Dapat diakses tanpa autentikasi
-    - **POST/PUT/DELETE endpoints**: Dapat diakses tanpa autentikasi (development mode)
+    - **REST API** (`/api/**`): Dapat diakses tanpa autentikasi (public).
+    - **MVC Pages** (`/products`, `/categories`): Memerlukan login.
+      - `USER`: Hanya dapat melihat produk (read-only).
+      - `ADMIN`: Dapat melakukan CRUD pada produk dan kategori.
+    
+    ## Upload Gambar
+    - Endpoint REST API menggunakan `imageUrl` (string URL) untuk gambar.
+    - Endpoint MVC mendukung `multipart/form-data` untuk upload file.
+    - Gambar disimpan di Cloudinary (production) atau lokal (development).
     
     ## Format Response
     Semua endpoint mengembalikan response dalam format:
@@ -17,23 +24,31 @@ info:
       "data": { ... }
     }
     ```
-  version: 1.0.0
+    
+    ## Base URL
+    - **Local**: `http://localhost:8080`
+    - **Staging**: Aiven MySQL (database dummy)
+    - **Production**: Aiven MySQL (database asli)
+  version: 1.1.1
   contact:
-    name: Hendro Wungga
-    email: hendro@example.com
+    name: Hend Wunga
+    email: hend@example.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://localhost:8080
-    description: Local Development Server
+  - url: https://store-staging-hendrowunga073-1e55.e.aivencloud.com:18066
+    description: Staging Server (Aiven MySQL)
 
 tags:
   - name: Products
     description: CRUD operasi untuk produk
   - name: Categories
     description: CRUD operasi untuk kategori
+
+security:
+  - basicAuth: []
 
 paths:
   /api/products:
@@ -57,6 +72,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductListResponse"
+              example:
+                success: true
+                message: "Products retrieved successfully"
+                data:
+                  - id: 1
+                    name: "MacBook Pro 14 inch"
+                    brand: "Apple"
+                    price: 19999000
 
     post:
       tags: [Products]
@@ -82,6 +105,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Category with id 99 not found"
+                data: null
 
   /api/products/{id}:
     get:
@@ -96,6 +123,7 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
             example: 1
       responses:
         "200":
@@ -110,6 +138,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Product with id 99 not found"
+                data: null
 
     put:
       tags: [Products]
@@ -123,6 +155,7 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
             example: 1
       requestBody:
         required: true
@@ -162,6 +195,7 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
             example: 1
       responses:
         "200":
@@ -194,7 +228,7 @@ paths:
     post:
       tags: [Categories]
       summary: Buat kategori baru
-      description: Membuat kategori baru (hanya admin)
+      description: Membuat kategori baru. Kategori nama harus unik.
       operationId: createCategory
       requestBody:
         required: true
@@ -210,11 +244,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/CategoryResponse"
         "400":
-          description: Nama kategori sudah ada
+          description: Nama kategori sudah ada atau validasi gagal
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Category name may already exist"
+                data: null
 
   /api/categories/{id}:
     get:
@@ -229,6 +267,7 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
             example: 1
       responses:
         "200":
@@ -247,7 +286,7 @@ paths:
     put:
       tags: [Categories]
       summary: Update kategori
-      description: Mengupdate nama kategori berdasarkan ID
+      description: Mengupdate nama kategori berdasarkan ID. Nama harus unik.
       operationId: updateCategory
       parameters:
         - name: id
@@ -256,6 +295,7 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
             example: 1
       requestBody:
         required: true
@@ -295,6 +335,7 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
             example: 1
       responses:
         "200":
@@ -311,6 +352,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Basic Authentication (username:password)
+
   schemas:
     ProductRequest:
       type: object
@@ -319,15 +366,18 @@ components:
         - name
         - brand
         - categoryId
+        - price
         - description
       properties:
         name:
           type: string
           description: Nama produk
+          minLength: 1
           example: "MacBook Pro 14 inch"
         brand:
           type: string
           description: Merek produk
+          minLength: 1
           example: "Apple"
         categoryId:
           type: integer
@@ -337,7 +387,7 @@ components:
         price:
           type: number
           format: double
-          description: Harga produk
+          description: Harga produk (minimal 0)
           minimum: 0
           example: 19999000
         description:
@@ -345,10 +395,11 @@ components:
           description: Deskripsi produk (10-2000 karakter)
           minLength: 10
           maxLength: 2000
-          example: "MacBook Pro 14 inch dengan chip M3 Pro"
+          example: "MacBook Pro 14 inch dengan chip M3 Pro untuk produktivitas"
         imageUrl:
           type: string
-          description: URL gambar produk
+          format: uri
+          description: URL gambar produk (opsional)
           example: "https://example.com/macbook.jpg"
 
     CategoryRequest:
@@ -359,8 +410,9 @@ components:
       properties:
         name:
           type: string
-          description: Nama kategori
-          example: "Electronics"
+          description: Nama kategori (harus unik)
+          minLength: 1
+          example: "Elektronik"
 
     Product:
       type: object
@@ -368,7 +420,8 @@ components:
       properties:
         id:
           type: integer
-          description: ID produk
+          readOnly: true
+          description: ID produk (auto-generated)
           example: 1
         name:
           type: string
@@ -388,15 +441,17 @@ components:
         description:
           type: string
           description: Deskripsi produk
-          example: "MacBook Pro 14 inch dengan chip M3 Pro"
+          example: "MacBook Pro 14 inch dengan chip M3 Pro untuk produktivitas"
         createdAt:
           type: string
           format: date-time
-          description: Waktu pembuatan
+          readOnly: true
+          description: Waktu pembuatan (auto-generated)
           example: "2026-01-15T10:30:00"
         imageFileName:
           type: string
-          description: URL/ nama file gambar
+          nullable: true
+          description: URL/nama file gambar
           example: "https://res.cloudinary.com/demo/image/upload/sample.jpg"
 
     Category:
@@ -405,12 +460,13 @@ components:
       properties:
         id:
           type: integer
-          description: ID kategori
+          readOnly: true
+          description: ID kategori (auto-generated)
           example: 1
         name:
           type: string
           description: Nama kategori
-          example: "Electronics"
+          example: "Elektronik"
 
     ProductResponse:
       type: object
