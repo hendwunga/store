@@ -9,7 +9,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,7 +16,7 @@ import com.hend.store.models.Category;
 import com.hend.store.models.Product;
 import com.hend.store.models.ProductDTO;
 import com.hend.store.services.CategoryRepository;
-import com.hend.store.services.CloudinaryService;
+import com.hend.store.services.ImageStorageService;
 import com.hend.store.services.ProductsRepository;
 
 import jakarta.validation.Valid;
@@ -30,14 +29,14 @@ public class ProductsController {
 
     private final ProductsRepository productsRepository;
     private final CategoryRepository categoryRepository;
-    private final CloudinaryService cloudinaryService;
+    private final ImageStorageService imageStorageService;
 
     public ProductsController(ProductsRepository productsRepository,
                               CategoryRepository categoryRepository,
-                              CloudinaryService cloudinaryService) {
+                              ImageStorageService imageStorageService) {
         this.productsRepository = productsRepository;
         this.categoryRepository = categoryRepository;
-        this.cloudinaryService = cloudinaryService;
+        this.imageStorageService = imageStorageService;
     }
 
     @GetMapping({ "", "/" })
@@ -65,19 +64,12 @@ public class ProductsController {
     public String createProduct(@Valid @ModelAttribute ProductDTO productDTO,
             BindingResult result, Model model) {
 
-        if (productDTO.getImageFile() == null || productDTO.getImageFile().isEmpty()) {
-            result.addError(new FieldError("productDTO", "imageFile", "Image file is required"));
-        }
-
         if (result.hasErrors()) {
             model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
             return "products/CreateProduct";
         }
 
         try {
-            MultipartFile imageFile = productDTO.getImageFile();
-            String imageUrl = cloudinaryService.upload(imageFile, "store/products");
-
             Category category = categoryRepository.findById(productDTO.getCategoryId()).orElse(null);
 
             Product product = new Product();
@@ -87,13 +79,19 @@ public class ProductsController {
             product.setPrice(productDTO.getPrice());
             product.setDescription(productDTO.getDescription());
             product.setCreatedAt(LocalDateTime.now());
-            product.setImageFileName(imageUrl);
+
+            MultipartFile imageFile = productDTO.getImageFile();
+            if (imageFile != null && !imageFile.isEmpty()) {
+                String imageUrl = imageStorageService.upload(imageFile, "store/products");
+                product.setImageFileName(imageUrl);
+            } else {
+                product.setImageFileName(imageStorageService.getPlaceholder());
+            }
 
             productsRepository.save(product);
 
         } catch (Exception e) {
             log.error("Error creating product", e);
-            result.addError(new FieldError("productDTO", "imageFile", "Failed to upload image"));
             model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
             return "products/CreateProduct";
         }
@@ -139,7 +137,8 @@ public class ProductsController {
         try {
             MultipartFile imageFile = productDTO.getImageFile();
             if (imageFile != null && !imageFile.isEmpty()) {
-                String imageUrl = cloudinaryService.upload(imageFile, "store/products");
+                imageStorageService.delete(product.getImageFileName());
+                String imageUrl = imageStorageService.upload(imageFile, "store/products");
                 product.setImageFileName(imageUrl);
             }
 
@@ -155,7 +154,6 @@ public class ProductsController {
 
         } catch (Exception e) {
             log.error("Error updating product", e);
-            result.addError(new FieldError("productDTO", "imageFile", "Failed to upload image"));
             model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
             return "products/EditProduct";
         }
@@ -165,7 +163,10 @@ public class ProductsController {
 
     @GetMapping("/delete")
     public String deleteProduct(@RequestParam int id) {
-        productsRepository.findById(id).ifPresent(productsRepository::delete);
+        productsRepository.findById(id).ifPresent(p -> {
+            imageStorageService.delete(p.getImageFileName());
+            productsRepository.delete(p);
+        });
         return "redirect:/products";
     }
 }
