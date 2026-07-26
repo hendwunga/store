@@ -1,0 +1,26 @@
+# ============================================
+# STAGING SERVER - Database Dummy (Aiven MySQL)
+# Staging credentials: see .env
+# ============================================
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://store-staging-hendrowunga073-1e55.e.aivencloud.com:18066/defaultdb?sslMode=REQUIRED&useUnicode=true&characterEncoding=utf8
+    username: avnadmin
+    password: ${STAGING_DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data-staging.sql
+
+server:
+  port: ${PORT:8080}
