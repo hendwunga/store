@@ -1,42 +1,230 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Login</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <style>
-      body { background: #f5f7fa; display: flex; align-items: center; min-height: 100vh; }
-      .login-card { border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.12); padding: 2rem; }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-md-5">
-          <div class="login-card bg-white">
-            <h3 class="text-center mb-4">Store Login</h3>
-            <div th:if="${param.error}" class="alert alert-danger">Invalid username or password.</div>
-            <div th:if="${param.logout}" class="alert alert-info">You have been logged out.</div>
-            <form method="post" th:action="@{/login}">
-              <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" name="username" class="form-control" required />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control" required />
-              </div>
-              <button type="submit" class="btn btn-primary w-100">Sign in</button>
-            </form>
-            <hr class="my-3" />
-            <div class="small text-muted text-center">
-              Demo: <strong>admin</strong> / <strong>admin123</strong><br />
-              Demo: <strong>user</strong> / <strong>user123</strong>
-            </div>
-          </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link th:href="@{/css/styles.css}" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; }
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-wrapper::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+      animation: float 15s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(30px, -30px) rotate(5deg); }
+      66% { transform: translate(-20px, 20px) rotate(-3deg); }
+    }
+    .login-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 1.5rem;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 0.6s ease-out;
+    }
+    .login-logo {
+      width: 64px;
+      height: 64px;
+      background: var(--gradient-primary);
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      font-size: 1.8rem;
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+    }
+    .login-title {
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--gray-800);
+      text-align: center;
+      margin-bottom: 0.25rem;
+    }
+    .login-subtitle {
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    .form-floating-custom {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    .form-floating-custom label {
+      position: absolute;
+      top: 50%;
+      left: 1rem;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      pointer-events: none;
+      background: transparent;
+      padding: 0 0.25rem;
+    }
+    .form-floating-custom input:focus ~ label,
+    .form-floating-custom input:not(:placeholder-shown) ~ label {
+      top: -0.5rem;
+      left: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--primary);
+      background: white;
+      padding: 0 0.25rem;
+    }
+    .form-floating-custom input {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      font-size: 0.95rem;
+      width: 100%;
+      transition: all 0.2s;
+      background: transparent;
+    }
+    .form-floating-custom input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+    .btn-login {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--gradient-primary);
+      color: white;
+      border: none;
+      border-radius: 0.75rem;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+      margin-top: 0.5rem;
+    }
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+    }
+    .demo-accounts {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--gray-200);
+    }
+    .demo-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+    .demo-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--gray-100);
+      padding: 0.4rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin: 0.2rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .demo-chip:hover {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--primary);
+    }
+    .demo-chip .chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .demo-chip .chip-dot.admin { background: var(--primary); }
+    .demo-chip .chip-dot.user { background: var(--success); }
+    .alert-store {
+      border-radius: 0.75rem;
+      padding: 0.85rem 1rem;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-logo">&#x1F6D2;</div>
+      <h1 class="login-title">Welcome Back</h1>
+      <p class="login-subtitle">Sign in to manage your store</p>
+
+      <div th:if="${param.error}" class="alert alert-danger alert-store">
+        <span>&#x26A0;&#xFE0F;</span>
+        <span>Invalid username or password</span>
+      </div>
+      <div th:if="${param.logout}" class="alert alert-info alert-store">
+        <span>&#x2705;</span>
+        <span>You have been logged out successfully</span>
+      </div>
+
+      <form method="post" th:action="@{/login}">
+        <div class="form-floating-custom">
+          <input type="text" name="username" placeholder=" " required autocomplete="username" />
+          <label>Username</label>
+        </div>
+        <div class="form-floating-custom">
+          <input type="password" name="password" placeholder=" " required autocomplete="current-password" />
+          <label>Password</label>
+        </div>
+        <button type="submit" class="btn-login">Sign In</button>
+      </form>
+
+      <div class="demo-accounts">
+        <span class="demo-label">Demo Accounts</span>
+        <div>
+          <span class="demo-chip" onclick="fillLogin('admin','admin123')">
+            <span class="chip-dot admin"></span>
+            <strong>admin</strong> / admin123
+          </span>
+          <span class="demo-chip" onclick="fillLogin('user','user123')">
+            <span class="chip-dot user"></span>
+            <strong>user</strong> / user123
+          </span>
         </div>
       </div>
     </div>
-  </body>
+  </div>
+
+  <script>
+    function fillLogin(u, p) {
+      document.querySelector('input[name="username"]').value = u;
+      document.querySelector('input[name="password"]').value = p;
+    }
+  </script>
+</body>
 </html>
