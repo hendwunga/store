@@ -16,19 +16,37 @@ public class CloudinaryService {
         this.cloudinary = cloudinary;
     }
 
+    public boolean isAvailable() {
+        return cloudinary != null;
+    }
+
     public String upload(MultipartFile file, String folder) {
         if (cloudinary == null) {
-            throw new IllegalStateException(
-                "Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, " +
-                "CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables."
-            );
+            throw new IllegalStateException("Cloudinary tidak dikonfigurasi");
         }
         try {
             Map<String, String> options = Map.of("folder", folder);
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
-            return uploadResult.get("secure_url").toString();
+            Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), options);
+            return result.get("secure_url").toString();
         } catch (Exception e) {
-            throw new RuntimeException("Upload image failed", e);
+            throw new RuntimeException("Cloudinary upload gagal: " + e.getMessage(), e);
         }
+    }
+
+    public void delete(String imageUrl) {
+        if (cloudinary == null || imageUrl == null) return;
+        try {
+            String publicId = extractPublicId(imageUrl);
+            if (publicId != null) {
+                cloudinary.uploader().destroy(publicId, Map.of());
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private String extractPublicId(String imageUrl) {
+        if (!imageUrl.contains("cloudinary.com")) return null;
+        String afterUpload = imageUrl.substring(imageUrl.indexOf("/upload/") + 8);
+        int lastDot = afterUpload.lastIndexOf(".");
+        return lastDot > 0 ? afterUpload.substring(0, lastDot) : afterUpload;
     }
 }
