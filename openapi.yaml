@@ -38,8 +38,8 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://store-staging-hendrowunga073-1e55.e.aivencloud.com:18066
-    description: Staging Server (Aiven MySQL)
+  - url: https://bon-awareness-sublime-adapted.trycloudflare.com
+    description: Staging Server (Cloudflare Tunnel → Aiven MySQL)
 
 tags:
   - name: Products
