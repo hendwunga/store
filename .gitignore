@@ -32,3 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 data/
+
+### Environment Variables (SENSITIVE) ###
+.env
+
+### Uploads ###
+uploads/
