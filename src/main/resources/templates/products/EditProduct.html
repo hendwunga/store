@@ -1,77 +1,89 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Edit Product</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <style>
-      body { background-color: #f8f9fa; }
-      .form-card { box-shadow: 0 4px 12px rgba(0,0,0,.15); border-radius: 12px; padding: 30px; margin-top: 40px; background: #fff; }
-      .img-preview { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; margin-top: 10px; }
-    </style>
-  </head>
-  <body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edit Product - Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link th:href="@{/css/styles.css}" rel="stylesheet" />
+</head>
+<body class="bg-mesh">
+
+  <nav class="navbar navbar-store sticky-top">
     <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-md-8">
-          <div class="form-card">
-            <h2 class="text-center mb-4">Edit Product</h2>
-            <form th:object="${productDTO}" method="post" enctype="multipart/form-data"
-                  th:action="@{/products/edit(id=${product.id})}">
-              <div class="mb-3">
-                <label class="form-label">Name</label>
-                <input type="text" class="form-control" th:field="*{name}" />
-                <div th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-danger"></div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Brand</label>
-                <input type="text" class="form-control" th:field="*{brand}" />
-                <div th:if="${#fields.hasErrors('brand')}" th:errors="*{brand}" class="text-danger"></div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Category</label>
-                <select class="form-select" th:field="*{categoryId}">
-                  <option value="0">-- Select Category --</option>
-                  <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
-                </select>
-                <div th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}" class="text-danger"></div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Price</label>
-                <input type="number" step="0.01" min="0" class="form-control" th:field="*{price}" />
-                <div th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="text-danger"></div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Description</label>
-                <textarea class="form-control" th:field="*{description}" rows="3"></textarea>
-                <div th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="text-danger"></div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Current Image</label><br />
-                <img th:if="${product.imageFileName != null}" th:src="${product.imageFileName}" alt="Current" class="img-preview" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Upload New Image</label>
-                <input type="file" class="form-control" th:field="*{imageFile}" onchange="previewImage(event)" />
-                <img id="imgPreview" class="img-preview d-none" alt="Preview" />
-                <div th:if="${#fields.hasErrors('imageFile')}" th:errors="*{imageFile}" class="text-danger"></div>
-              </div>
-              <div class="d-flex justify-content-between mt-4">
-                <a class="btn btn-outline-secondary" href="/products">Cancel</a>
-                <button type="submit" class="btn btn-primary">Update</button>
-              </div>
-            </form>
-          </div>
-        </div>
+      <a class="navbar-brand" th:href="@{/products}">
+        <span class="brand-icon">&#x1F6D2;</span>
+        Store
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        <a class="nav-link" th:href="@{/categories}">&#x1F4C1; Categories</a>
       </div>
     </div>
-    <script>
-      function previewImage(event) {
-        const img = document.getElementById("imgPreview");
-        img.src = URL.createObjectURL(event.target.files[0]);
-        img.classList.remove("d-none");
-      }
-    </script>
-  </body>
+  </nav>
+
+  <div class="container py-4">
+    <div class="page-header animate-fadeIn">
+      <h2>&#x270F;&#xFE0F; Edit Product</h2>
+      <a class="btn-store btn-store-outline" th:href="@{/products}">&#x2190; Back to Products</a>
+    </div>
+
+    <div class="form-card animate-fadeIn" style="animation-delay:0.1s">
+      <form method="post" th:action="@{/products/edit}" enctype="multipart/form-data" class="form-grid">
+        <input type="hidden" name="id" th:value="${product.id}" />
+
+        <div class="form-group">
+          <label class="form-label-store">Product Name <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control-store" required th:value="${product.name}" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label-store">Brand <span class="text-danger">*</span></label>
+          <input type="text" name="brand" class="form-control-store" required th:value="${product.brand}" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label-store">Category <span class="text-danger">*</span></label>
+          <select name="categoryId" class="form-control-store" required>
+            <option value="">-- Select Category --</option>
+            <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"
+                    th:selected="${product.category != null && product.category.id == cat.id}">Category</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label-store">Price (Rp) <span class="text-danger">*</span></label>
+          <input type="number" name="price" class="form-control-store" required min="0" th:value="${product.price}" />
+        </div>
+
+        <div class="form-group form-group-full">
+          <label class="form-label-store">Description</label>
+          <textarea name="description" class="form-control-store" rows="3" th:text="${product.description}"></textarea>
+        </div>
+
+        <div class="form-group form-group-full">
+          <label class="form-label-store">Product Image</label>
+          <div class="upload-area" onclick="document.getElementById('imageFile').click()">
+            <input type="file" id="imageFile" name="imageFile" accept="image/*" class="d-none" onchange="previewImage(event,'imgPreview')" />
+            <div id="uploadPlaceholder">
+              <img th:if="${product.imageFileName != null}" th:src="${product.imageFileName}" class="img-preview mb-2" style="max-height:120px;border-radius:0.5rem" />
+              <p class="mb-0" style="color:var(--gray-500)">Click to change image</p>
+              <small style="color:var(--gray-400)">Current image will be kept if no new file selected</small>
+            </div>
+            <img id="imgPreview" src="#" alt="Preview" class="img-preview d-none" />
+          </div>
+        </div>
+
+        <div class="form-group-full d-flex gap-2 mt-2">
+          <button type="submit" class="btn-store btn-store-primary">&#x2714;&#xFE0F; Update Product</button>
+          <a class="btn-store btn-store-outline" th:href="@{/products}">Cancel</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script th:src="@{/js/app.js}"></script>
+</body>
 </html>
