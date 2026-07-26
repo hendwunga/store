@@ -1,5 +1,6 @@
 package com.hend.store.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,24 +18,52 @@ import java.util.List;
 @Configuration
 public class OpenApiConfig {
 
+    @Value("${app.openapi.title:Store API}")
+    private String apiTitle;
+
+    @Value("${app.openapi.version:1.0.0}")
+    private String apiVersion;
+
+    @Value("${app.openapi.description:REST API untuk manajemen produk dan kategori}")
+    private String apiDescription;
+
+    @Value("${app.openapi.contact.name:Hend Wunga}")
+    private String contactName;
+
+    @Value("${app.openapi.contact.email:hend@example.com}")
+    private String contactEmail;
+
+    @Value("${app.openapi.license:MIT}")
+    private String licenseName;
+
+    @Value("${app.openapi.server.local:http://localhost:8080}")
+    private String urlLocal;
+
+    @Value("${app.openapi.server.staging:https://staging-store.herokuapp.com}")
+    private String urlStaging;
+
+    @Value("${app.openapi.server.prod:https://your-app.herokuapp.com}")
+    private String urlProd;
+
     @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "basicAuth";
 
         return new OpenAPI()
             .info(new Info()
-                .title(" Store API")
-                .version("1.0.0")
-                .description("REST API untuk manajemen produk dan kategori pada aplikasi Store")
+                .title(apiTitle)
+                .version(apiVersion)
+                .description(apiDescription)
                 .contact(new Contact()
-                    .name("Hendro Wungga")
-                    .email("hendro@example.com"))
+                    .name(contactName)
+                    .email(contactEmail))
                 .license(new License()
-                    .name("MIT")
+                    .name(licenseName)
                     .url("https://opensource.org/licenses/MIT")))
             .servers(List.of(
-                new Server().url("http://localhost:8080").description("Local Development Server"),
-                new Server().url("https://your-app.herokuapp.com").description("Production Server")))
+                new Server().url(urlLocal).description("Local Development Server"),
+                new Server().url(urlStaging).description("Staging Server (Database Dummy - Aman untuk testing)"),
+                new Server().url(urlProd).description("Production Server (Database Asli - HATI-HATI)")))
             .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
             .components(new Components()
                 .addSecuritySchemes(securitySchemeName, new SecurityScheme()
