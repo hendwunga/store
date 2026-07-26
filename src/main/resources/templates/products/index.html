@@ -1,106 +1,123 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Product Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <style>
-      body { background-color: #f5f7fa; }
-      .card-product { border-radius: 15px; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
-      .card-product:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); }
-      .card-product img { height: 180px; object-fit: cover; }
-      .card-product .card-body { padding: 1rem; }
-      .badge-category { font-size: 0.8rem; padding: 0.4em 0.7em; border-radius: 0.6rem; }
-      .btn-small { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
-      @media (max-width: 576px) { .card-product img { height: 150px; } }
-    </style>
-  </head>
-  <body>
-    <nav class="navbar navbar-expand navbar-dark bg-dark mb-4">
-      <div class="container">
-        <a class="navbar-brand" href="#">📦 Store</a>
-        <div class="navbar-nav ms-auto">
-          <a class="nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/categories}">Categories</a>
-          <span class="nav-link text-light" sec:authentication="name"></span>
-          <a class="nav-link" th:href="@{/logout}">Logout</a>
-        </div>
-      </div>
-    </nav>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Products - Store</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link th:href="@{/css/styles.css}" rel="stylesheet" />
+</head>
+<body class="bg-mesh">
 
-    <div class="container py-3">
-      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-        <h2 class="fw-bold">Product Management</h2>
-        <a class="btn btn-success mt-2 mt-md-0" th:href="@{/products/create}">+ Create Product</a>
+  <!-- Navbar -->
+  <nav class="navbar navbar-store sticky-top">
+    <div class="container">
+      <a class="navbar-brand" th:href="@{/products}">
+        <span class="brand-icon">&#x1F6D2;</span>
+        Store
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        <a class="nav-link" sec:authorize="hasRole('ADMIN')" th:href="@{/categories}">
+          &#x1F4C1; Categories
+        </a>
+        <span class="user-badge">
+          <span class="user-avatar" sec:authentication="name">U</span>
+          <span sec:authentication="name">user</span>
+        </span>
+        <a class="nav-link" th:href="@{/logout}">&#x1F6AA; Logout</a>
       </div>
+    </div>
+  </nav>
 
-      <form class="row g-2 mb-4" th:action="@{/products}" method="get">
-        <div class="col-md-8">
-          <input type="text" class="form-control" name="search" placeholder="Search by name or brand..."
-                 th:value="${search}" />
-        </div>
-        <div class="col-md-2">
-          <button class="btn btn-primary w-100" type="submit">Search</button>
-        </div>
-        <div class="col-md-2">
-          <a class="btn btn-outline-secondary w-100" th:href="@{/products}" th:if="${search != null}">Clear</a>
-        </div>
+  <div class="container py-4">
+
+    <!-- Page Header -->
+    <div class="page-header animate-fadeIn">
+      <h2>&#x1F4E6; Products</h2>
+      <a class="btn-store btn-store-success" sec:authorize="hasRole('ADMIN')" th:href="@{/products/create}">
+        &#x2795; Add Product
+      </a>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-bar mb-4 animate-fadeIn" style="animation-delay: 0.1s">
+      <form th:action="@{/products}" method="get" class="d-flex align-items-center w-100 gap-2">
+        <span style="padding-left:0.75rem;color:var(--gray-400)">&#x1F50D;</span>
+        <input type="text" name="search" class="form-control border-0" placeholder="Search products by name or brand..."
+               th:value="${search}" style="box-shadow:none" />
+        <button type="submit" class="btn-store btn-store-primary btn-store-sm">Search</button>
+        <a th:href="@{/products}" class="btn-store btn-store-outline btn-store-sm" th:if="${search != null}">Clear</a>
       </form>
+    </div>
 
-      <div class="row g-4" th:if="${products != null && !#lists.isEmpty(products)}">
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3" th:each="product : ${products}">
-          <div class="card card-product shadow-sm">
-            <img th:src="${product.imageFileName}" class="card-img-top" alt="Product Image" />
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title fw-bold" th:text="${product.name}"></h5>
-              <p class="mb-1 text-muted" th:text="${product.brand}"></p>
-              <span class="badge bg-info text-dark badge-category mb-2"
-                    th:text="${product.category?.name}"></span>
-              <p class="fw-semibold mb-2">$<span th:text="${#numbers.formatDecimal(product.price,1,2)}"></span></p>
-              <p class="text-truncate mb-3" th:text="${product.description}"></p>
-              <div class="mt-auto d-flex justify-content-between">
-                <a class="btn btn-outline-primary btn-small" th:href="@{/products/edit(id=${product.id})}">Edit</a>
-                <button class="btn btn-outline-danger btn-small" data-bs-toggle="modal"
-                        data-bs-target="#deleteModal"
-                        th:attr="data-id=${product.id}, data-name=${product.name}">Delete</button>
-              </div>
+    <!-- Product Grid -->
+    <div class="row g-4" th:if="${products != null && !#lists.isEmpty(products)}">
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3" th:each="product, iter : ${products}">
+        <div class="card-store animate-fadeIn" th:style="'animation-delay: ' + ${iter.index * 0.05} + 's'">
+          <div style="overflow:hidden">
+            <img th:src="${product.imageFileName}" class="card-img-top" alt="Product" />
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+              <h5 class="card-title" th:text="${product.name}">Product Name</h5>
+              <span class="badge-store badge-store-info" th:text="${product.category?.name}">Category</span>
             </div>
-            <div class="card-footer text-muted text-end small"
-                 th:text="${#temporals.format(product.createdAt,'dd MMM yyyy')}"></div>
+            <p class="card-brand mb-2" th:text="${product.brand}">Brand</p>
+            <p class="card-price" th:text="'Rp ' + ${#numbers.formatDecimal(product.price,0,'COMMA',0,'POINT')}">Rp 0</p>
+            <p class="card-desc" th:text="${product.description}">Description</p>
           </div>
-        </div>
-      </div>
-
-      <div class="text-center py-5" th:if="${products == null || #lists.isEmpty(products)}">
-        <p class="text-muted">No products found.</p>
-      </div>
-    </div>
-
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Delete Product</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            Are you sure you want to delete <strong id="modalProductName"></strong>?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <a href="#" class="btn btn-danger" id="confirmDeleteBtn">Delete</a>
+          <div class="card-footer-custom">
+            <span class="small" style="color:var(--gray-400)">
+              &#x1F4C5; <span th:text="${#temporals.format(product.createdAt,'dd MMM yyyy')}">01 Jan 2026</span>
+            </span>
+            <div class="d-flex gap-1" sec:authorize="hasRole('ADMIN')">
+              <a class="btn-store btn-store-outline btn-store-sm" th:href="@{/products/edit(id=${product.id})}">
+                &#x270F;&#xFE0F; Edit
+              </a>
+              <button class="btn-store btn-store-danger btn-store-sm" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                      th:attr="data-id=${product.id}, data-name=${product.name}, data-url=@{/products/delete(id=${product.id})}">
+                &#x1F5D1;&#xFE0F; Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-      document.getElementById("deleteModal")?.addEventListener("show.bs.modal", function (event) {
-        const btn = event.relatedTarget;
-        document.querySelector("#modalProductName").textContent = btn.getAttribute("data-name");
-        document.querySelector("#confirmDeleteBtn").setAttribute("href", "/products/delete?id=" + btn.getAttribute("data-id"));
-      });
-    </script>
-  </body>
+    <!-- Empty State -->
+    <div class="empty-state" th:if="${products == null || #lists.isEmpty(products)}">
+      <div class="empty-icon">&#x1F4E6;</div>
+      <h5>No products found</h5>
+      <p th:if="${search != null}">Try a different search term or <a th:href="@{/products}">clear the filter</a></p>
+      <p th:if="${search == null}">Start by adding your first product to the store</p>
+      <a class="btn-store btn-store-primary mt-3" th:href="@{/products/create}" th:if="${search == null}">&#x2795; Add First Product</a>
+    </div>
+
+  </div>
+
+  <!-- Delete Modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">&#x26A0;&#xFE0F; Delete Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete <strong id="modalItemName"></strong>?</p>
+          <p class="text-muted small mb-0">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-store btn-store-outline" data-bs-dismiss="modal">Cancel</button>
+          <a href="#" class="btn-store btn-store-danger" id="confirmDeleteBtn">Delete</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script th:src="@{/js/app.js}"></script>
+  <script>initDeleteModal();</script>
+</body>
 </html>
